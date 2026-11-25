@@ -247,7 +247,20 @@ jobs:
         run: |
           TARGET_URL="${SITE_URL:-https://notulis.studio-pasti.net}"
           TARGET_URL="${TARGET_URL%/}"
+
+          set +e
           STATUS=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 20 "${TARGET_URL}/")
+          CURL_EXIT=$?
+          set -e
+
+          if [ "$CURL_EXIT" -eq 60 ]; then
+            echo "::warning::SSL certificate for ${TARGET_URL} is not yet trusted (self-signed). Run AutoSSL / Let's Encrypt in cPanel so microphone recording & PWA work in browsers."
+            STATUS=$(curl -k -sS -o /dev/null -w "%{http_code}" --max-time 20 "${TARGET_URL}/")
+          elif [ "$CURL_EXIT" -ne 0 ]; then
+            echo "::error::Failed to reach ${TARGET_URL}/ (curl exit code ${CURL_EXIT})"
+            exit "$CURL_EXIT"
+          fi
+
           echo "HTTP status from ${TARGET_URL}/: ${STATUS}"
           if [ "$STATUS" -ne 200 ]; then
             echo "::error::Expected HTTP 200 from ${TARGET_URL}/, got ${STATUS}"
