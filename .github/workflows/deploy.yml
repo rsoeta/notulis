@@ -88,6 +88,7 @@ jobs:
           cache: "npm"
 
       - name: Validate required secrets
+        id: validate
         shell: bash
         env:
           HAS_GAS_URL: ${{ secrets.VITE_GAS_WEBAPP_URL != '' }}
@@ -103,7 +104,11 @@ jobs:
               exit 1
             fi
           done
-          if [ "$HAS_SSH" != "true" ] && [ "$HAS_FTP" != "true" ]; then
+          if [ "$HAS_SSH" = "true" ]; then
+            echo "transport=ssh" >> "$GITHUB_OUTPUT"
+          elif [ "$HAS_FTP" = "true" ]; then
+            echo "transport=ftps" >> "$GITHUB_OUTPUT"
+          else
             echo "::error::Configure either SSH secrets (SSH_HOST, SSH_USER, SSH_PRIVATE_KEY) or FTPS secrets (FTP_HOST, FTP_USERNAME, FTP_PASSWORD)."
             exit 1
           fi
@@ -134,7 +139,7 @@ jobs:
           fi
 
       - name: Deploy via SSH + rsync (zero-downtime staged swap)
-        if: ${{ secrets.SSH_PRIVATE_KEY != '' }}
+        if: steps.validate.outputs.transport == 'ssh'
         shell: bash
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
@@ -172,7 +177,7 @@ jobs:
         run: rm -f ~/.ssh/deploy_key
 
       - name: Deploy via FTPS (fallback when SSH unavailable)
-        if: ${{ secrets.SSH_PRIVATE_KEY == '' && secrets.FTP_PASSWORD != '' }}
+        if: steps.validate.outputs.transport == 'ftps'
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_HOST }}
