@@ -138,7 +138,7 @@ jobs:
             exit 1
           fi
 
-      - name: Deploy via SSH + rsync (zero-downtime staged swap)
+      - name: Deploy via SSH (rsync or tar-over-SSH fallback)
         if: steps.validate.outputs.transport == 'ssh'
         shell: bash
         env:
@@ -150,6 +150,7 @@ jobs:
         run: |
           PORT="${SSH_PORT:-22}"
           TARGET_PATH="${DEPLOY_PATH:-/home/stuw/stuw8183/public_html/repositories/notulis}"
+          SSH_OPTS="-i ~/.ssh/deploy_key -p $PORT -o BatchMode=yes"
 
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
@@ -157,19 +158,62 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p "$PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
-          ssh -i ~/.ssh/deploy_key -p "$PORT" -o BatchMode=yes "${SSH_USER}@${SSH_HOST}" \
-            "mkdir -p \"$TARGET_PATH\""
+          ssh $SSH_OPTS "${SSH_USER}@${SSH_HOST}" "mkdir -p \"$TARGET_PATH\""
 
-          rsync -az --delay-updates --delete-after \
-            --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
-            --exclude='.env' \
-            --exclude='.env.*' \
-            --exclude='.well-known/' \
-            --exclude='cgi-bin/' \
-            --exclude='.git/' \
-            --exclude='error_log' \
-            -e "ssh -i ~/.ssh/deploy_key -p $PORT -o BatchMode=yes" \
-            dist/ "${SSH_USER}@${SSH_HOST}:${TARGET_PATH}/"
+          if ssh $SSH_OPTS "${SSH_USER}@${SSH_HOST}" "command -v rsync >/dev/null 2>&1"; then
+            echo "Remote rsync detected: deploying via rsync..."
+            rsync -az --delay-updates --delete-after \
+              --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
+              --exclude='.env' \
+              --exclude='.env.*' \
+              --exclude='.well-known/' \
+              --exclude='cgi-bin/' \
+              --exclude='.git/' \
+              --exclude='error_log' \
+              -e "ssh $SSH_OPTS" \
+              dist/ "${SSH_USER}@${SSH_HOST}:${TARGET_PATH}/"
+          else
+            echo "Remote rsync unavailable (cPanel Jailed Shell): deploying via tar-over-SSH..."
+            tar -C dist -czf /tmp/notulis-dist.tar.gz .
+            ssh $SSH_OPTS "${SSH_USER}@${SSH_HOST}" \
+              "cat > \"$TARGET_PATH/.deploy_release.tar.gz\"" < /tmp/notulis-dist.tar.gz
+            rm -f /tmp/notulis-dist.tar.gz
+
+            ssh $SSH_OPTS "${SSH_USER}@${SSH_HOST}" bash -s -- "$TARGET_PATH" <<'REMOTE_EOF'
+          set -euo pipefail
+          TARGET_PATH="$1"
+          ARCHIVE="$TARGET_PATH/.deploy_release.tar.gz"
+          STAGE_DIR="$TARGET_PATH/.deploy_stage_tmp"
+
+          cleanup() {
+            rm -rf "$STAGE_DIR" "$ARCHIVE"
+          }
+          trap cleanup EXIT
+
+          rm -rf "$STAGE_DIR"
+          mkdir -p "$STAGE_DIR"
+          tar -xzf "$ARCHIVE" -C "$STAGE_DIR"
+          find "$STAGE_DIR" -type d -exec chmod 755 {} +
+          find "$STAGE_DIR" -type f -exec chmod 644 {} +
+
+          if [ -d "$STAGE_DIR/assets" ]; then
+            mkdir -p "$TARGET_PATH/assets"
+            cp -rf "$STAGE_DIR/assets/." "$TARGET_PATH/assets/"
+          fi
+
+          cp -rf "$STAGE_DIR/." "$TARGET_PATH/"
+
+          if [ -d "$TARGET_PATH/assets" ] && [ -d "$STAGE_DIR/assets" ]; then
+            for existing in "$TARGET_PATH/assets/"*; do
+              [ -e "$existing" ] || continue
+              base_name=$(basename "$existing")
+              if [ ! -e "$STAGE_DIR/assets/$base_name" ]; then
+                rm -f "$existing"
+              fi
+            done
+          fi
+          REMOTE_EOF
+          fi
 
       - name: Cleanup SSH key
         if: always()
