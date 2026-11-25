@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+:root {
+  --app-font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --app-font-size: 16px;
+}
+
+@layer base {
+  html {
+    font-family: var(--app-font-family);
+    font-size: var(--app-font-size);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  }
+
+  .font-serif-doc {
+    font-family: 'Times New Roman', Times, Georgia, serif;
+  }
+}
+
+/* Jaga ukuran minimum keterbacaan UI tetap >= 12px */
+@layer utilities {
+  .text-xs {
+    font-size: max(12px, 0.75rem);
+  }
+  .text-sm {
+    font-size: max(12px, 0.875rem);
+  }
+}
+
+/* Lenis smooth scroll helpers */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Compact SweetAlert2 refinements for mobile-first experience */
+.swal2-container {
+  padding: 0.75rem !important;
+}
+
+.swal2-popup.notulis-swal-popup {
+  width: 320px !important;
+  max-width: calc(100vw - 1.5rem) !important;
+  padding: 1rem !important;
+  border-radius: 1rem !important;
+}
+
+.swal2-popup.notulis-swal-toast {
+  width: 300px !important;
+  max-width: calc(100vw - 1.5rem) !important;
+  padding: 0.625rem 0.875rem !important;
+  border-radius: 0.75rem !important;
+}
+
+/* Formal A4 Print Styles */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 15mm 16mm 15mm 18mm;
+  }
+
+  html {
+    font-size: 16px !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .minutes-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .minutes-sheet * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}

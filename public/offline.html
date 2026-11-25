@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#2563EB" />
+    <title>Sedang Offline — Notulis</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f8fafc;
+        --card: #ffffff;
+        --border: #e2e8f0;
+        --text: #0f172a;
+        --muted: #64748b;
+        --primary: #2563eb;
+        --primary-hover: #1d4ed8;
+        --accent-bg: #eff6ff;
+        --warn-bg: #fffbeb;
+        --warn-border: #fde68a;
+        --warn-text: #92400e;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        min-height: 100dvh;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+
+      .card {
+        width: 100%;
+        max-width: 26rem;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 1.25rem;
+        padding: 1.75rem 1.5rem;
+        box-shadow: 0 10px 30px -12px rgba(15, 23, 42, 0.12);
+        text-align: center;
+      }
+
+      .logo-wrap {
+        width: 3.5rem;
+        height: 3.5rem;
+        margin: 0 auto 1rem;
+        border-radius: 1rem;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 18px -6px rgba(37, 99, 235, 0.45);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 9999px;
+        background: var(--accent-bg);
+        color: var(--primary);
+        font-size: 0.72rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+      }
+
+      .dot {
+        width: 0.45rem;
+        height: 0.45rem;
+        border-radius: 9999px;
+        background: #ef4444;
+      }
+
+      h1 {
+        margin: 0 0 0.5rem;
+        font-size: 1.15rem;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+
+      p {
+        margin: 0 0 1rem;
+        font-size: 0.85rem;
+        line-height: 1.55;
+        color: var(--muted);
+      }
+
+      .note {
+        background: var(--warn-bg);
+        border: 1px solid var(--warn-border);
+        color: var(--warn-text);
+        border-radius: 0.875rem;
+        padding: 0.75rem 0.875rem;
+        font-size: 0.76rem;
+        line-height: 1.45;
+        text-align: left;
+        margin-bottom: 1.25rem;
+      }
+
+      .btn {
+        width: 100%;
+        min-height: 3rem;
+        padding: 0.75rem 1rem;
+        border: none;
+        border-radius: 0.875rem;
+        background: var(--primary);
+        color: #ffffff;
+        font-size: 0.875rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: background-color 0.15s ease, transform 0.1s ease;
+      }
+
+      .btn:hover {
+        background: var(--primary-hover);
+      }
+
+      .btn:active {
+        transform: scale(0.985);
+      }
+
+      .status {
+        margin-top: 0.75rem;
+        font-size: 0.75rem;
+        color: var(--muted);
+        min-height: 1.1rem;
+      }
+
+      .status.online {
+        color: #059669;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card" role="main">
+      <div class="logo-wrap" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 64 64" fill="none">
+          <rect x="24" y="12" width="16" height="24" rx="8" stroke="#FFFFFF" stroke-width="4" />
+          <path d="M16 30C16 38.837 23.163 46 32 46C40.837 46 48 38.837 48 30" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" />
+          <path d="M32 46V54M23 54H41" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" />
+        </svg>
+      </div>
+
+      <div class="badge">
+        <span class="dot" id="statusDot"></span>
+        <span id="badgeText">Tidak Ada Koneksi Internet</span>
+      </div>
+
+      <h1>Perangkat Sedang Offline</h1>
+      <p>
+        Aplikasi <strong>Notulis</strong> memerlukan koneksi internet untuk menyinkronkan data Google Sheets dan memproses notulen AI.
+      </p>
+
+      <div class="note">
+        <strong>Info Keamanan Data:</strong> Jika Anda baru saja merekam audio rapat, potongan audio tersimpan aman secara lokal di perangkat (IndexedDB) dan dapat diproses kembali saat internet aktif.
+      </div>
+
+      <button type="button" class="btn" id="reloadBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+          <path d="M21 3v5h-5" />
+        </svg>
+        <span>Coba Muat Ulang</span>
+      </button>
+
+      <div class="status" id="statusMsg">Periksa Wi-Fi atau data seluler Anda, lalu coba lagi.</div>
+    </main>
+
+    <script>
+      (function () {
+        var btn = document.getElementById('reloadBtn');
+        var msg = document.getElementById('statusMsg');
+        var dot = document.getElementById('statusDot');
+        var badgeText = document.getElementById('badgeText');
+
+        function tryReload() {
+          if (navigator.onLine) {
+            msg.textContent = 'Koneksi tersambung, memuat ulang aplikasi...';
+            msg.className = 'status online';
+            window.location.reload();
+          } else {
+            msg.textContent = 'Masih offline. Pastikan koneksi internet aktif lalu coba kembali.';
+            msg.className = 'status';
+          }
+        }
+
+        btn.addEventListener('click', tryReload);
+
+        window.addEventListener('online', function () {
+          dot.style.background = '#10b981';
+          badgeText.textContent = 'Koneksi Kembali Aktif';
+          msg.textContent = 'Internet terhubung! Memuat ulang halaman...';
+          msg.className = 'status online';
+          setTimeout(function () {
+            window.location.reload();
+          }, 700);
+        });
+      })();
+    </script>
+  </body>
+</html>

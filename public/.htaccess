@@ -1,0 +1,47 @@
+# ==============================================================================
+# Notulis SPA — Production Apache Configuration (cPanel Shared Hosting)
+# ==============================================================================
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # 1. Blokir akses ke file tersembunyi/sensitif kecuali .well-known (AutoSSL)
+  RewriteRule (^|/)\.(?!well-known/) - [F,L]
+  RewriteRule \.(env|log|sql|bak|sh)$ - [F,L]
+
+  # 2. Paksa HTTPS (kecualikan validasi SSL cPanel / Let's Encrypt)
+  RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+  # 3. Fallback SPA ke index.html jika file/direktori fisik tidak ada
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "microphone=(self), camera=(), geolocation=()"
+
+  # Cache jangka panjang untuk aset hasil hash Vite
+  <FilesMatch "\.(js|css|woff2?|png|svg|webp|ico)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  # Jangan cache entrypoint HTML, Service Worker, Manifest PWA, atau OG banner
+  <FilesMatch "^(index\.html|sw\.js|manifest\.webmanifest|offline\.html|og-image\.png)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript application/json image/svg+xml application/manifest+json
+</IfModule>
